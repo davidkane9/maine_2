@@ -1,1 +1,3 @@
-# maine_2
+# Calculating the Winner in Maine 2nd Congressional District
+
+Consider [the raw votes](https://github.com/davidkane9/maine_2.git) in the 2018 election for the 2nd Congressional District in Maine. Maine uses [ranked choice voting](https://en.wikipedia.org/wiki/Ranked_voting), a system which allows votes to provide a rank for each candidate on the ballot. This repo contains the raw Excel files, which allows us to replicate the state's calculations. 
