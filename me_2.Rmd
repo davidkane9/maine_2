@@ -115,7 +115,8 @@ final <- x %>%
   select(vote_id, precinct, ballot_style, Poliquin:Golden) %>% 
   gather(key = "candidate", value = "cum_votes", Poliquin:Golden)
 
-# This is the second target tibble that students should work towards.
+# This is the second target tibble that students should work towards. Let's save
+# a copy so some can start from there.
 
 
 ```
@@ -139,7 +140,7 @@ final <- x %>%
 ggplot(final, aes(x = vote_id, y = cum_votes, color = candidate)) + 
   geom_point(size = 0.1) +
   transition_time(vote_id) +
-  shadow_mark()
+  shadow_trail()
 
 ```
 
