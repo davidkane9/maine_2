@@ -1,0 +1,145 @@
+---
+title: "Maine 2nd Congressional District 2018 Election"
+author: "David Kane"
+date: "11/20/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(janitor)
+library(readxl)
+library(stringr)
+library(gganimate)
+library(tidyverse)
+```
+
+
+```{r clean_data, cache=TRUE}
+
+x_1 <- read_excel("Nov18CVRExportRaw-1.xlsx") 
+x_2 <- read_excel("Nov18CVRExportRaw-2.xlsx")
+x_3 <- read_excel("Nov18CVRExportRaw-3.xlsx") 
+
+x <- bind_rows(x_1, x_2, x_3) %>% 
+  clean_names()
+
+# The default names for the votes are way too long to use. I am curious about
+# patterns across precincts. Which are the most Democratic and Republican? I am
+# also curious about ballot_style. Do these effect votes, a la all the crazyness
+# is Florida?
+
+# There are 166 ballot sytles and 428 precincts. 
+
+# Does vote, which seems to be an integer but which I currently read in as a
+# double, mean something? Note that not every number is used. For example, there
+# is no 5 or 7. 
+
+# There is definite structure to vote numbers. For example, every vote wth a
+# number before 1346 is in Fayette. But there is also overlap in that many
+# precincts have at least some votes (mail-in votes?) with very high numbers.
+# Anyway, it is certainly impossible that vote captures the temporal ordering of
+# when voting occured, which is the variable I really want.
+
+names(x) <- c("vote", "precinct", "ballot_style", 
+              "choice_1", "choice_2", "choice_3", "choice_4", "choice_5")
+
+# But we already know that we are going to want some tidy data. Should we tidy
+# it here or later? Let's stick with later.
+
+# vote is not a good variable for organizing things, not least because the
+# distribution is not uniform. But we still need a variable that we will use to
+# "group" the voting for the animation. In what order should votes "appear" in
+# the animation? We will use the `vote_id` variable for this purpose.
+
+# We could go with a random order by assigning vote_id to a random value between
+# 1 and nrow(x). But the law of large numbers (?) makes this a poor choice since
+# it ensures that everything is "too" smooth. Poliquin leads Golden by about 1%
+# all the way through. We want more (fake?) jumpiness.
+
+# The obvious choices are to group votes by either ballot style or precinct. We
+# could just use those groupings raw --- meaning all the votes in Abbot appear
+# in the graphic at once --- or we could number votes within those categories.
+
+# Maybe give the viewer a choice, which would highlight how the leaderboard can
+# change as different areas report, thereby making it hard to forecast the
+# winner mid-way through election night?
+
+# For now, vote_id is grouped by precinct but still a unique number.
+
+x <- x %>% 
+  sample_n(10000) %>%     # Make things faster
+  arrange(precinct) %>% 
+  mutate(vote_id = row_number())
+
+# One class project is to create to this tibble, so I need to write it out and
+# push it.
+
+```
+
+
+
+
+```{r cum_votes}
+# I want to graph the cumulative votes with gganimate. Easiest (?) way to do
+# that is to first create a function which transforms choices into cumulative
+# votes. (Note that this could be a one-liner, but I show each step separately
+# for clarity.)
+
+choice_to_votes <- function(choice, name){
+  votes <- ifelse(str_detect(choice, name), 1, 0)
+  votes <- cumsum(votes)
+  as.integer(votes)
+}
+
+# Note that I am only doing this for choice_1. Could do it for, at least,
+# choice_2, if only to be ready to deal with ranked choice voting issues. I also
+# think that ballot design might be an interesting thing to look at.
+
+x$Poliquin <- choice_to_votes(x$choice_1, "Poliquin")
+# x$Bond <- choice_to_votes(x$choice_1, "Bond")
+# x$Hoar <- choice_to_votes(x$choice_1, "Hoar")
+# x$undervote <- choice_to_votes(x$choice_1, "undervote")
+# x$overvote <- choice_to_votes(x$choice_1, "overvote")
+x$Golden <- choice_to_votes(x$choice_1, "Golden")
+
+# We know what the official vote totals are from the first round, so we can
+# check our calculations. Unfortunately, they do not match exactly! Poliquin got
+# 131,631 and Golden 128,999 in the first round. This is close to what I see,
+# but not exactly the same. What is up with that? Maybe a complication
+# associated with under/overvotes?
+
+# Make this data tidy and get rid of useless columns.
+
+final <- x %>%
+  select(vote_id, precinct, ballot_style, Poliquin:Golden) %>% 
+  gather(key = "candidate", value = "cum_votes", Poliquin:Golden)
+
+# This is the second target tibble that students should work towards.
+
+
+```
+
+
+
+
+
+```{r animate, cache=TRUE}
+# There are at least two animations which might be fun. First, show the
+# cumulative votes as a line graph. Doing this by precinct, in alphabetical
+# order, shows that there was a period in which Golden was ahead, about 1/3 of
+# the way through the voting. Second, a column chart which grows in height for
+# each candidate as the votes come in. Or perhaps this should be beeswarm or
+# even a column chart with jitter so it looks like an empty bar is being filled.
+
+# I need to be careful, though, because almost 300k rows is breaking gganimate,
+# at least with transition_state() and the shadow_mark() option.
+
+
+ggplot(final, aes(x = vote_id, y = cum_votes, color = candidate)) + 
+  geom_point(size = 0.1) +
+  transition_time(vote_id) +
+  shadow_mark()
+
+```
+
