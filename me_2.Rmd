@@ -125,7 +125,7 @@ final <- x %>%
 
 
 
-```{r animate, cache=TRUE}
+```{r animate, cache=TRUE, eval=FALSE}
 # There are at least two animations which might be fun. First, show the
 # cumulative votes as a line graph. Doing this by precinct, in alphabetical
 # order, shows that there was a period in which Golden was ahead, about 1/3 of
