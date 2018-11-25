@@ -20,7 +20,7 @@ x <- bind_rows(x_1, x_2, x_3) %>%
 # The default names for the votes are way too long to use. I am curious about
 # patterns across precincts. Which are the most Democratic and Republican? I am
 # also curious about ballot_style. Do these effect votes, a la all the crazyness
-# is Florida?
+# in Florida?
 
 # There are 166 ballot sytles and 428 precincts. 
 
@@ -147,9 +147,10 @@ base_plot <- ggplot(final, aes(x = vote_id, y = cum_votes, color = candidate)) +
        caption = "Official Election Results from the Maine Secretary of State",
        x = NULL,
        y = "Cumulative First Round Votes") +
+  scale_y_continuous(breaks = c(0, 50000, 100000), labels = c("0", "50,000", "100,000")) + 
   theme(axis.text.x  = element_blank(),
         axis.title.x = element_blank(),
-        legend.title=element_blank())
+        legend.title = element_blank())
 
 # Third class exercise is to create this plot. Want to separate out all the
 # little issues associated with making a pretty ggplot from the complexities
